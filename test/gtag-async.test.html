@@ -1,0 +1,74 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Test</title>
+    <script src="../gtag-async.js" type="text/javascript"></script>
+    
+    <style>
+        /* format html code nicely */
+        code {
+            white-space: pre;
+            font-size: 16px;
+            display: block;
+            padding: 1em;
+            border: 1px solid lightgray;
+            margin-bottom: 4rem;
+        }
+    </style>
+</head>
+
+<body>
+
+    <h1>gtagAsync</h1>
+    <hr>
+
+    <h2>dataLayer log</h2>
+    <code id="dataLayer-log"></code>
+
+
+    <h2>dataLayer</h2>
+    <code id="dataLayer"></code>
+
+
+    <script>
+        // override dataLayer.push to test and simulate async event callback
+        window.dataLayer = window.dataLayer || [];
+        (function () {
+            const f = dataLayer.push;
+            dataLayer.push = function () {
+                const args = arguments[0];
+                console.log(args);
+                try {
+                    setTimeout(() => {
+                        if (args[0] === 'event') {
+                            args[2].event_callback();
+                        }
+                        else if (args[0] === 'get') {
+                            args[3]();
+                        }
+                    }, 10);
+                    return f.apply(this, arguments);
+                } finally {
+                    document.getElementById('dataLayer-log').innerText += JSON.stringify(dataLayer[dataLayer.length - 1]) + '\n';
+                    document.getElementById('dataLayer').innerText = JSON.stringify(dataLayer, null, 4);
+                }
+            }
+        })();
+    </script>
+
+
+    <script>
+        // test case
+        (async function () {
+            await gtagAsync('event', 'example_event_1');
+            await gtagAsync('event', 'example_event_2');
+            return await gtagAsync('get', 'get_event_3');
+        })()
+    </script>
+</body>
+
+</html>
